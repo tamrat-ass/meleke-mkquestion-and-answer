@@ -1,0 +1,232 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/context';
+
+interface Round {
+  id: string;
+  name: string;
+  round_number: number;
+}
+
+export default function CreateGamePage() {
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+  const [selectedRound, setSelectedRound] = useState('');
+  const [gameTitle, setGameTitle] = useState('');
+  const [gameDescription, setGameDescription] = useState('');
+  const [group1Name, setGroup1Name] = useState('Team 1');
+  const [group2Name, setGroup2Name] = useState('Team 2');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchRounds();
+  }, []);
+
+  const fetchRounds = async () => {
+    try {
+      const response = await fetch('/api/rounds');
+      if (response.ok) {
+        const data = await response.json();
+        setRounds(data.rounds || []);
+        if (data.rounds && data.rounds.length > 0) {
+          setSelectedRound(data.rounds[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching rounds:', error);
+      setError(t('common.failedLoad'));
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!selectedRound) {
+      setError(t('common.selectRound'));
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: gameTitle.trim() || undefined,
+          description: gameDescription.trim() || undefined,
+          round_id: selectedRound,
+          groups: [
+            { name: group1Name.trim() || t('games.teamName') + ' 1' },
+            { name: group2Name.trim() || t('games.teamName') + ' 2' },
+          ],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || t('common.failedCreate'));
+        setIsLoading(false);
+        return;
+      }
+
+      router.push('/dashboard/games');
+    } catch (err) {
+      setError(t('common.errorOccurred'));
+      console.error('Create game error:', err);
+      setIsLoading(false);
+    }
+  };
+
+  if (isFetching) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">{t('games.newGame')}</h2>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground">{t('games.newGame')}</h2>
+          <p className="text-muted-foreground">{t('games.setupGame')}</p>
+        </div>
+        <Link href="/dashboard/games">
+          <Button variant="outline" className="border-border/50">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('common.back')}
+          </Button>
+        </Link>
+      </div>
+
+      <Card className="border-border/50 bg-card max-w-2xl">
+        <CardHeader>
+          <CardTitle>{t('games.gameDetails')}</CardTitle>
+          <CardDescription>{t('games.createGameDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-destructive">
+                {error}
+              </div>
+            )}
+
+            {rounds.length === 0 ? (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-yellow-600">
+                {t('games.noRounds')} <Link href="/dashboard/rounds" className="underline">{t('games.createRound')}</Link>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">{t('games.selectRound')} *</label>
+                  <Select value={selectedRound} onValueChange={setSelectedRound}>
+                    <SelectTrigger className="bg-input border-border/50">
+                      <SelectValue placeholder={t('common.selectRound')} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border/50">
+                      {rounds.map((round) => (
+                        <SelectItem key={round.id} value={round.id}>
+                          {round.name} ({t('rounds.roundNumber')} {round.round_number})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">{t('games.gameTitle')}</label>
+                  <Input
+                    placeholder={t('games.gameTitlePlaceholder')}
+                    value={gameTitle}
+                    onChange={(e) => setGameTitle(e.target.value)}
+                    className="bg-input border-border/50"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">{t('common.description')}</label>
+                  <Input
+                    placeholder={t('common.descriptionPlaceholder')}
+                    value={gameDescription}
+                    onChange={(e) => setGameDescription(e.target.value)}
+                    className="bg-input border-border/50"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-sm font-medium text-foreground">{t('games.teams')}</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">{t('games.teamName')} 1</label>
+                      <Input
+                        value={group1Name}
+                        onChange={(e) => setGroup1Name(e.target.value)}
+                        placeholder={t('games.teamName')}
+                        className="bg-input border-border/50"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">{t('games.teamName')} 2</label>
+                      <Input
+                        value={group2Name}
+                        onChange={(e) => setGroup2Name(e.target.value)}
+                        placeholder={t('games.teamName')}
+                        className="bg-input border-border/50"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Link href="/dashboard/games" className="flex-1">
+                    <Button variant="outline" className="w-full border-border/50" disabled={isLoading}>
+                      {t('common.cancel')}
+                    </Button>
+                  </Link>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? t('common.creating') : t('games.newGame')}
+                  </Button>
+                </div>
+              </>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
