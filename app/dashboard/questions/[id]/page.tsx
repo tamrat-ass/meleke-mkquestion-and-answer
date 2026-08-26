@@ -15,6 +15,11 @@ interface Question {
   correct_answer: string;
   time_limit: number;
   marks: number;
+  question_type: string;
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  option_d?: string;
   options: Array<{ option_key: string; option_value: string }>;
 }
 
@@ -34,6 +39,10 @@ export default function EditQuestionPage() {
     correct_answer: '',
     time_limit: 30,
     marks: 1,
+    option_a: '',
+    option_b: '',
+    option_c: '',
+    option_d: '',
   });
 
   useEffect(() => {
@@ -45,12 +54,17 @@ export default function EditQuestionPage() {
       const response = await fetch(`/api/questions/${questionId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Question data:', data.question); // Debug log
         setQuestion(data.question);
         setFormData({
           question_text: data.question.question_text,
           correct_answer: data.question.correct_answer,
           time_limit: data.question.time_limit,
           marks: data.question.marks,
+          option_a: data.question.option_a || '',
+          option_b: data.question.option_b || '',
+          option_c: data.question.option_c || '',
+          option_d: data.question.option_d || '',
         });
       }
     } catch (error) {
@@ -142,11 +156,11 @@ export default function EditQuestionPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('questions.correctAnswer')}</label>
-            <Input
+            <textarea
               value={formData.correct_answer}
               onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
               placeholder={t('questions.correctAnswerPlaceholder')}
-              className="bg-input border-border/50"
+              className="w-full p-3 rounded border border-border/50 bg-input text-foreground min-h-32"
             />
           </div>
 
@@ -170,33 +184,90 @@ export default function EditQuestionPage() {
               />
             </div>
           </div>
+
+          {question?.question_type === 'multiple_choice' && (
+            <div className="space-y-4 border-t border-border/30 pt-4">
+              <h3 className="text-sm font-bold">{t('questions.answerOptions')}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('game.labelA')}</label>
+                  <textarea
+                    value={formData.option_a}
+                    onChange={(e) => setFormData({ ...formData, option_a: e.target.value })}
+                    placeholder="Option A text"
+                    className="w-full p-3 rounded border border-border/50 bg-input text-foreground min-h-20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('game.labelB')}</label>
+                  <textarea
+                    value={formData.option_b}
+                    onChange={(e) => setFormData({ ...formData, option_b: e.target.value })}
+                    placeholder="Option B text"
+                    className="w-full p-3 rounded border border-border/50 bg-input text-foreground min-h-20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('game.labelC')}</label>
+                  <textarea
+                    value={formData.option_c}
+                    onChange={(e) => setFormData({ ...formData, option_c: e.target.value })}
+                    placeholder="Option C text"
+                    className="w-full p-3 rounded border border-border/50 bg-input text-foreground min-h-20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('game.labelD')}</label>
+                  <textarea
+                    value={formData.option_d}
+                    onChange={(e) => setFormData({ ...formData, option_d: e.target.value })}
+                    placeholder="Option D text"
+                    className="w-full p-3 rounded border border-border/50 bg-input text-foreground min-h-20"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {question.options && question.options.length > 0 && (
-        <Card className="border-border/50 bg-card">
-          <CardHeader>
-            <CardTitle>{t('questions.options')}</CardTitle>
+      {question && (
+        <Card className="border-border/50 bg-card shadow-lg">
+          <CardHeader className="pb-4 border-b border-border/20">
+            <CardTitle>{t('questions.answerOptions')}</CardTitle>
             <CardDescription>{t('questions.currentOptions')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {question.options.map((option) => (
-                <div
-                  key={option.option_key}
-                  className={`p-3 rounded border ${
-                    option.option_key === formData.correct_answer
-                      ? 'border-green-500/50 bg-green-500/10'
-                      : 'border-border/30'
-                  }`}
-                >
-                  <span className="font-semibold">{option.option_key}.</span> {option.option_value}
-                  {option.option_key === formData.correct_answer && (
-                    <span className="ml-2 text-xs text-green-600">✓ {t('questions.correct')}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+          <CardContent className="pt-6">
+            {question.options && question.options.length > 0 ? (
+              <div className="space-y-3">
+                {question.options.map((option) => (
+                  <div
+                    key={option.option_key}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      option.option_key === formData.correct_answer
+                        ? 'border-green-500/70 bg-green-500/15'
+                        : 'border-border/30 bg-secondary/10'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg text-foreground">{option.option_key}.</span>
+                        <span className="text-foreground">{option.option_value}</span>
+                      </div>
+                      {option.option_key === formData.correct_answer && (
+                        <span className="text-xs font-bold bg-green-500/20 text-green-600 px-3 py-1 rounded-full">
+                          ✓ {t('questions.correct')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('questions.noOptionsAvailable')}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

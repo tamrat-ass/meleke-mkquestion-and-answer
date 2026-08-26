@@ -15,11 +15,17 @@ export async function GET(request: NextRequest) {
     `;
     const totalQuestions = parseInt(questionsResult.rows[0]?.count || '0');
 
-    // Fetch total users count
-    const usersResult = await sql<{ count: number }>`
+    // Fetch total rounds count
+    const roundsResult = await sql<{ count: number }>`
+      SELECT COUNT(*) as count FROM rounds
+    `;
+    const totalRounds = parseInt(roundsResult.rows[0]?.count || '0');
+
+    // Fetch total active users count
+    const activeUsersResult = await sql<{ count: number }>`
       SELECT COUNT(*) as count FROM users WHERE is_active = true
     `;
-    const totalUsers = parseInt(usersResult.rows[0]?.count || '0');
+    const totalActiveUsers = parseInt(activeUsersResult.rows[0]?.count || '0');
 
     // Fetch recent activity
     const activityResult = await sql<{
@@ -37,7 +43,8 @@ export async function GET(request: NextRequest) {
     const stats = {
       totalGames,
       totalQuestions,
-      totalUsers,
+      totalRounds,
+      totalActiveUsers,
       recentActivity
     };
 

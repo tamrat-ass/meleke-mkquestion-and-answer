@@ -28,10 +28,24 @@ export async function POST(request: NextRequest) {
   try {
     const { name, description } = await request.json();
 
-    if (!name) {
+    if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json(
         { error: 'Round name is required' },
         { status: 400 }
+      );
+    }
+
+    const trimmedName = name.trim();
+
+    // Check if round with same name already exists (case-insensitive)
+    const existingRound = await sql`
+      SELECT id FROM rounds WHERE LOWER(name) = LOWER(${trimmedName})
+    `;
+
+    if (existingRound.rows.length > 0) {
+      return NextResponse.json(
+        { error: 'A round with this name already exists' },
+        { status: 409 }
       );
     }
 
@@ -53,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     const insertResult = await sql`
       INSERT INTO rounds (name, round_number, description, created_by)
-      VALUES (${name}, ${roundNumber}, ${description || null}, ${userId})
+      VALUES (${trimmedName}, ${roundNumber}, ${description || null}, ${userId})
       RETURNING id, name, round_number, description, created_at
     `;
 

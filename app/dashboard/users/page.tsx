@@ -148,22 +148,26 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header Section */}
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">{t('users.users')}</h2>
-          <p className="text-muted-foreground">{t('users.manageUsers')}</p>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            {t('users.users')}
+          </h2>
+          <p className="text-muted-foreground mt-2">{t('users.manageUsers')}</p>
         </div>
         <Link href="/dashboard/users/new">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
             <Plus className="mr-2 h-4 w-4" />
             {t('users.newUser')}
           </Button>
         </Link>
       </div>
 
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle>{t('common.search')}</CardTitle>
+      {/* Search & Filter Card */}
+      <Card className="border-border/50 bg-gradient-to-br from-card to-card/50 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">{t('common.search')}</CardTitle>
           <CardDescription>{t('users.manageUsers')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -171,11 +175,11 @@ export default function UsersPage() {
             placeholder={t('users.email')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-input border-border/50"
+            className="bg-input border-border/50 focus:border-primary/50 transition-colors"
           />
           <div className="flex gap-2">
             <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-48 bg-input border-border/50">
+              <SelectTrigger className="w-48 bg-input border-border/50 focus:border-primary/50">
                 <SelectValue placeholder={t('users.role')} />
               </SelectTrigger>
               <SelectContent className="bg-card border-border/50">
@@ -189,58 +193,71 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle>{t('users.users')} ({filteredUsers.length})</CardTitle>
+      {/* Users Table Card */}
+      <Card className="border-border/50 bg-card shadow-lg">
+        <CardHeader className="pb-4 border-b border-border/20">
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-2xl">{t('users.users')}</span>
+            <span className="bg-gradient-to-r from-primary to-primary/60 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              {filteredUsers.length}
+            </span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+              </div>
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">{t('users.noUsers')}</div>
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t('users.noUsers')}</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-border/30">
+                <thead className="bg-gradient-to-r from-primary/10 to-primary/5 border-b-2 border-primary/20">
                   <tr>
-                    <th className="text-left p-3 font-medium">{t('users.fullName')}</th>
-                    <th className="text-left p-3 font-medium">{t('users.email')}</th>
-                    <th className="text-left p-3 font-medium">{t('users.role')}</th>
-                    <th className="text-left p-3 font-medium">{t('common.status')}</th>
-                    <th className="text-left p-3 font-medium">{t('common.created')}</th>
-                    <th className="text-left p-3 font-medium">{t('common.action')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('users.fullName')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('users.email')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('users.role')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('common.status')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('common.created')}</th>
+                    <th className="text-left p-4 font-bold text-foreground">{t('common.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-border/20 hover:bg-secondary/30 transition-colors">
-                      <td className="p-3">{user.full_name}</td>
-                      <td className="p-3 text-muted-foreground">{user.email}</td>
-                      <td className="p-3">
-                        <span className="inline-block px-3 py-1 text-xs bg-primary/20 text-primary rounded-full">
+                    <tr key={user.id} className="border-b border-border/20 hover:bg-secondary/50 transition-all duration-200 group">
+                      <td className="p-4 font-semibold text-foreground group-hover:text-primary">{user.full_name}</td>
+                      <td className="p-4 text-muted-foreground">{user.email}</td>
+                      <td className="p-4">
+                        <span className="inline-block px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-primary/20 to-primary/10 text-primary rounded-full">
                           {user.role_name}
                         </span>
                       </td>
-                      <td className="p-3">
-                        <span className={`inline-block px-3 py-1 text-xs rounded-full ${
+                      <td className="p-4">
+                        <span className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-full ${
                           user.is_active
-                            ? 'bg-green-500/20 text-green-600'
-                            : 'bg-red-500/20 text-red-600'
+                            ? 'bg-green-500/20 text-green-600 dark:text-green-400'
+                            : 'bg-red-500/20 text-red-600 dark:text-red-400'
                         }`}>
                           {user.is_active ? t('users.active') : t('users.inactive')}
                         </span>
                       </td>
-                      <td className="p-3 text-muted-foreground">
+                      <td className="p-4 text-muted-foreground">
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
-                      <td className="p-3 flex gap-2">
+                      <td className="p-4 flex gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={`h-8 w-8 p-0 ${
+                          className={`h-8 w-8 p-0 transition-all ${
                             user.is_active
-                              ? 'text-muted-foreground hover:text-red-600'
-                              : 'text-muted-foreground hover:text-green-600'
+                              ? 'text-muted-foreground hover:text-red-600 hover:bg-red-500/10'
+                              : 'text-muted-foreground hover:text-green-600 hover:bg-green-500/10'
                           }`}
                           onClick={() => handleToggleStatus(user.id, user.is_active)}
                           disabled={togglingId === user.id}
@@ -255,7 +272,7 @@ export default function UsersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-600"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 transition-all"
                           onClick={() => handleResetPassword(user.id, user.email)}
                           title={t('common.resetPassword')}
                         >
@@ -265,7 +282,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -274,7 +291,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
                             onClick={() => handleDeleteUser(user.id)}
                           >
                             <Trash2 className="h-4 w-4" />

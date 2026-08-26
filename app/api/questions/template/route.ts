@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
-import { sql } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Create a new workbook
     const workbook = new ExcelJS.Workbook();
@@ -63,16 +62,28 @@ export async function GET(request: NextRequest) {
         round: 'Round 2'
       },
       {
-        question: 'Name the largest planet in our solar system.',
-        type: 'short_answer',
-        correctAnswer: 'Jupiter',
+        question: 'Please sign your document',
+        type: 'sign_screen',
+        correctAnswer: '',
         optionA: '',
         optionB: '',
         optionC: '',
         optionD: '',
-        timeLimit: 60,
-        marks: 2,
-        round: 'Round 2'
+        timeLimit: 10,
+        marks: 0,
+        round: 'Round 3'
+      },
+      {
+        question: 'The history and importance of scientific methods.',
+        type: 'general knowledge',
+        correctAnswer: '',
+        optionA: '',
+        optionB: '',
+        optionC: '',
+        optionD: '',
+        timeLimit: 120,
+        marks: 0,
+        round: 'Round 4'
       }
     ];
 

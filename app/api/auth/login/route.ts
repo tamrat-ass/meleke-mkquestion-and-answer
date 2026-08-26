@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { logActivity } from '@/lib/auth';
 import { createHash } from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -50,6 +51,18 @@ export async function POST(request: NextRequest) {
     // Check if user is active
     if (!user.is_active) {
       console.log(`Login attempt: User inactive - ${email}`);
+      // Log failed login attempt
+      const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      await logActivity(
+        user.id,
+        'LOGIN_FAILED_INACTIVE',
+        'user',
+        user.id,
+        { reason: 'Account inactive', email },
+        ipAddress as string,
+        userAgent as string
+      );
       return NextResponse.json(
         { error: 'This account is inactive. Please contact an administrator.' },
         { status: 401 }
@@ -65,6 +78,18 @@ export async function POST(request: NextRequest) {
 
     if (passwordHash !== user.password_hash) {
       console.log(`Login failed: Password mismatch for ${email}`);
+      // Log failed login attempt
+      const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      await logActivity(
+        user.id,
+        'LOGIN_FAILED_INVALID_PASSWORD',
+        'user',
+        user.id,
+        { reason: 'Invalid password', email },
+        ipAddress as string,
+        userAgent as string
+      );
       return NextResponse.json(
         { error: 'Incorrect password. Please try again.' },
         { status: 401 }
@@ -74,20 +99,17 @@ export async function POST(request: NextRequest) {
     // Get IP address and user agent
     const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
-    const timestamp = new Date().toISOString();
 
-    // Log the successful login activity with username and timestamp
-    const details = {
-      username: user.email,
-      full_name: user.full_name,
-      timestamp: timestamp,
-      role: user.role_name
-    };
-
-    await sql`
-      INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent, created_at)
-      VALUES (${user.id}, 'LOGIN_SUCCESS', 'user', ${user.id}, ${JSON.stringify(details)}, ${ipAddress}, ${userAgent}, NOW())
-    `;
+    // Log the successful login activity
+    await logActivity(
+      user.id,
+      'LOGIN_SUCCESS',
+      'user',
+      user.id,
+      { email, role: user.role_name },
+      ipAddress as string,
+      userAgent as string
+    );
 
     // Return user data without password
     const { password_hash, ...userWithoutPassword } = user;

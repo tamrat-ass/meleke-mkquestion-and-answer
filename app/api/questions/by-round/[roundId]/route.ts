@@ -18,6 +18,10 @@ export async function GET(
         q.minimum_time_frame,
         q.marks as difficulty,
         q.created_at,
+        q.option_a,
+        q.option_b,
+        q.option_c,
+        q.option_d,
         COALESCE(qt.name, 'multiple_choice') as question_type
       FROM questions q
       LEFT JOIN question_types qt ON q.question_type_id = qt.id
@@ -27,29 +31,35 @@ export async function GET(
 
     console.log('Questions result:', questionsResult.rows);
 
-    // For each question, fetch its options
-    const questionsWithOptions = await Promise.all(
-      questionsResult.rows.map(async (question: any) => {
-        const optionsResult = await sql`
-          SELECT option_key, option_value
-          FROM question_options
-          WHERE question_id = ${question.id}
-          ORDER BY option_key ASC
-        `;
+    // For each question, fetch its options (if applicable)
+    const questionsWithOptions = questionsResult.rows.map((question: any) => {
+      // Build options array from legacy columns (option_a, option_b, etc.)
+      const options = [];
+      if (question.option_a) {
+        options.push({ option_key: 'A', option_value: question.option_a });
+      }
+      if (question.option_b) {
+        options.push({ option_key: 'B', option_value: question.option_b });
+      }
+      if (question.option_c) {
+        options.push({ option_key: 'C', option_value: question.option_c });
+      }
+      if (question.option_d) {
+        options.push({ option_key: 'D', option_value: question.option_d });
+      }
 
-        return {
-          id: question.id,
-          title: question.title,
-          question_type: question.question_type,
-          difficulty: question.difficulty,
-          created_at: question.created_at,
-          correct_answer: question.correct_answer,
-          time_limit: question.time_limit,
-          minimum_time_frame: question.minimum_time_frame,
-          options: optionsResult.rows,
-        };
-      })
-    );
+      return {
+        id: question.id,
+        title: question.title,
+        question_type: question.question_type,
+        difficulty: question.difficulty,
+        created_at: question.created_at,
+        correct_answer: question.correct_answer,
+        time_limit: question.time_limit,
+        minimum_time_frame: question.minimum_time_frame,
+        options: options,
+      };
+    });
 
     console.log('Questions with options:', questionsWithOptions);
 

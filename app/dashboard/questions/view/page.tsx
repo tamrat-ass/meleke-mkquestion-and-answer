@@ -21,10 +21,11 @@ interface QuestionOption {
 
 interface Question {
   id: string;
-  question_text: string;
+  title: string;
   correct_answer: string;
   time_limit: number;
   marks: number;
+  difficulty: number;
   options: QuestionOption[];
 }
 
@@ -146,10 +147,10 @@ export default function ViewQuestionsPage() {
                       <h3 className="font-semibold text-foreground mb-2">
                         {t('questions.question')} {index + 1}
                       </h3>
-                      <p className="text-foreground mb-2">{question.question_text}</p>
+                      <p className="text-foreground mb-2">{question.title}</p>
                       <div className="flex gap-4 text-sm text-muted-foreground">
                         <span>{t('questions.time')}: {question.time_limit}s</span>
-                        <span>{t('questions.marks')}: {question.marks}</span>
+                        <span>{t('questions.marks')}: {question.difficulty}</span>
                       </div>
                     </div>
 

@@ -113,18 +113,25 @@ export default function NewQuestionPage() {
         return;
       }
 
-      if (!formData.correct_answer) {
-        setError(t('common.answerRequired'));
-        setIsLoading(false);
-        return;
-      }
-
-      // For multiple choice, validate options
-      if (formData.question_type === 'choose') {
-        if (!formData.optionA || !formData.optionB || !formData.optionC || !formData.optionD) {
-          setError(t('common.allOptionsRequired'));
+      // For sign_screen and general_knowledge, we don't need correct answer and options
+      const isNoAnswerType = formData.question_type === 'sign_screen' || 
+                             formData.question_type === 'general_knowledge' ||
+                             formData.question_type.toLowerCase().includes('general');
+      
+      if (!isNoAnswerType) {
+        if (!formData.correct_answer) {
+          setError(t('common.answerRequired'));
           setIsLoading(false);
           return;
+        }
+
+        // For multiple choice, validate options
+        if (formData.question_type === 'choose') {
+          if (!formData.optionA || !formData.optionB || !formData.optionC || !formData.optionD) {
+            setError(t('common.allOptionsRequired'));
+            setIsLoading(false);
+            return;
+          }
         }
       }
 
@@ -135,13 +142,13 @@ export default function NewQuestionPage() {
           question_text: formData.question_text,
           round_id: formData.round_id,
           question_type: formData.question_type,
-          correct_answer: formData.correct_answer,
+          correct_answer: isNoAnswerType ? '' : formData.correct_answer,
           time_limit: parseInt(formData.time_limit),
-          marks: parseInt(formData.marks),
-          optionA: formData.optionA,
-          optionB: formData.optionB,
-          optionC: formData.optionC,
-          optionD: formData.optionD,
+          marks: isNoAnswerType ? 0 : parseInt(formData.marks),
+          optionA: formData.question_type === 'choose' ? formData.optionA : '',
+          optionB: formData.question_type === 'choose' ? formData.optionB : '',
+          optionC: formData.question_type === 'choose' ? formData.optionC : '',
+          optionD: formData.question_type === 'choose' ? formData.optionD : '',
         }),
       });
 
@@ -232,25 +239,47 @@ export default function NewQuestionPage() {
                     <SelectValue placeholder={t('questions.selectType')} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border/50">
-                    <SelectItem value="choose">{t('questions.multipleChoice')}</SelectItem>
-                    <SelectItem value="short_answer">{t('questions.shortAnswer')}</SelectItem>
+                    {questionTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.name}>
+                        {type.name === 'multiple_choice' && t('questions.multipleChoice')}
+                        {type.name === 'short_answer' && t('questions.shortAnswer')}
+                        {type.name === 'sign_screen' && 'Sign Screen'}
+                        {type.name === 'general_knowledge' && t('questions.generalKnowledge')}
+                        {type.name === 'choose' && t('questions.multipleChoice')}
+                        {!['multiple_choice', 'short_answer', 'sign_screen', 'general_knowledge', 'choose'].includes(type.name) && type.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('questions.correctAnswer')} *</label>
-                <Input
-                  name="correct_answer"
-                  value={formData.correct_answer}
-                  onChange={handleInputChange}
-                  placeholder={formData.question_type === 'choose' ? 'A, B, C, or D' : t('questions.enterAnswer')}
-                  disabled={isLoading}
-                  className="bg-input border-border/50"
-                />
-              </div>
+              {formData.question_type !== 'sign_screen' && !formData.question_type.toLowerCase().includes('general') && (
+                <div className="space-y-2 col-span-3 md:col-span-1">
+                  <label className="text-sm font-medium">{t('questions.correctAnswer')} *</label>
+                  {formData.question_type === 'short_answer' ? (
+                    <textarea
+                      name="correct_answer"
+                      value={formData.correct_answer}
+                      onChange={handleInputChange}
+                      placeholder={t('questions.enterAnswer')}
+                      disabled={isLoading}
+                      rows={4}
+                      className="w-full px-3 py-2 rounded border border-border/50 bg-input text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                    />
+                  ) : (
+                    <Input
+                      name="correct_answer"
+                      value={formData.correct_answer}
+                      onChange={handleInputChange}
+                      placeholder={formData.question_type === 'choose' ? 'A, B, C, or D' : t('questions.enterAnswer')}
+                      disabled={isLoading}
+                      className="bg-input border-border/50"
+                    />
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('questions.timeLimit')} ({t('questions.seconds')})</label>
@@ -264,17 +293,19 @@ export default function NewQuestionPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('questions.marks')}</label>
-                <Input
-                  type="number"
-                  name="marks"
-                  value={formData.marks}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  className="bg-input border-border/50"
-                />
-              </div>
+              {formData.question_type !== 'sign_screen' && !formData.question_type.toLowerCase().includes('general') && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('questions.marks')}</label>
+                  <Input
+                    type="number"
+                    name="marks"
+                    value={formData.marks}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                    className="bg-input border-border/50"
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -289,7 +320,7 @@ export default function NewQuestionPage() {
             <CardContent className="space-y-4">
               {['A', 'B', 'C', 'D'].map((letter) => {
                 const optionKey = `option${letter}Placeholder` as const;
-                const labelKey = `option${letter}` as const;
+                const labelKey = `label${letter}` as const;
                 return (
                   <div key={letter} className="space-y-2">
                     <label className="text-sm font-medium">{t(`game.${labelKey}`)} *</label>

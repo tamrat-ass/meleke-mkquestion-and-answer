@@ -74,6 +74,37 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const { id } = await params;
 
+    // Check if there are related games
+    const gamesCheck = await sql`
+      SELECT COUNT(*) as count FROM games WHERE round_id = ${id}
+    `;
+
+    if (gamesCheck.rows[0]?.count > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete round with associated games. Please delete all games first.' },
+        { status: 409 }
+      );
+    }
+
+    // Check if there are related game_rounds (game sessions)
+    const gameRoundsCheck = await sql`
+      SELECT COUNT(*) as count FROM game_rounds WHERE round_id = ${id}
+    `;
+
+    if (gameRoundsCheck.rows[0]?.count > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete round with active game sessions. Please end all game sessions first.' },
+        { status: 409 }
+      );
+    }
+
+    // Cascade delete questions in this round
+    // This will automatically cascade delete question_options
+    await sql`
+      DELETE FROM questions WHERE round_id = ${id}
+    `;
+
+    // Now safe to delete the round
     const result = await sql`
       DELETE FROM rounds WHERE id = ${id}
       RETURNING id
@@ -87,7 +118,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     return NextResponse.json(
-      { message: 'Round deleted successfully' },
+      { message: 'Round and associated questions deleted successfully' },
       { status: 200 }
     );
   } catch (error) {

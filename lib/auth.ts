@@ -89,26 +89,43 @@ export async function getUserPermissions(userId: number) {
 export async function logActivity(
   userId: number | null,
   action: string,
-  entityType: string | null,
-  entityId: number | null,
+  entityType: string | null = null,
+  entityId: number | null = null,
   details: any = null,
   ipAddress: string | null = null,
   userAgent: string | null = null
 ) {
   try {
+    // Get user email for better tracking
+    let userEmail = null;
+    if (userId) {
+      const user = await getUserById(userId);
+      userEmail = user?.email || null;
+    }
+
+    const timestamp = new Date().toISOString();
+    const logDetails = {
+      ...details,
+      timestamp,
+      user_email: userEmail,
+      ip_address: ipAddress,
+      action_type: action
+    };
+
     await sql`
-      INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent)
+      INSERT INTO activity_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent, created_at)
       VALUES (
         ${userId},
         ${action},
         ${entityType},
         ${entityId},
-        ${details ? JSON.stringify(details) : null},
+        ${JSON.stringify(logDetails)},
         ${ipAddress},
         ${userAgent}
       )
     `;
   } catch (error) {
     console.error(' Error logging activity:', error);
+    // Don't throw - logging errors shouldn't break the main operation
   }
 }

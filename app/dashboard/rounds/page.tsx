@@ -16,6 +16,13 @@ interface Round {
   created_at: string;
 }
 
+interface Question {
+  id: string;
+  round_id: string;
+  title: string;
+  question_type: string;
+}
+
 export default function RoundsPage() {
   const { t } = useLanguage();
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -26,6 +33,7 @@ export default function RoundsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [userRole, setUserRole] = useState<string>('');
+  const [roundDependencies, setRoundDependencies] = useState<Record<string, { questions: number; games: number; sessions: number }>>({});
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -42,6 +50,52 @@ export default function RoundsPage() {
       if (response.ok) {
         const data = await response.json();
         setRounds(data.rounds || []);
+        
+        // Fetch dependencies for each round
+        const deps: Record<string, { questions: number; games: number; sessions: number }> = {};
+        
+        for (const round of data.rounds || []) {
+          let questionCount = 0;
+          let gameCount = 0;
+          let sessionCount = 0;
+
+          try {
+            // Fetch questions for this round
+            const questionsRes = await fetch('/api/questions');
+            if (questionsRes.ok) {
+              const questionsData = await questionsRes.json();
+              questionCount = (questionsData.questions || []).filter((q: Question) => q.round_id === round.id).length;
+            }
+          } catch (err) {
+            console.error('Error fetching questions:', err);
+          }
+
+          try {
+            // Fetch games for this round
+            const gamesRes = await fetch('/api/games');
+            if (gamesRes.ok) {
+              const gamesData = await gamesRes.json();
+              gameCount = (gamesData.games || []).filter((g: any) => g.round_id === round.id).length;
+            }
+          } catch (err) {
+            console.error('Error fetching games:', err);
+          }
+
+          try {
+            // Fetch game rounds (sessions) for this round
+            const sessionsRes = await fetch('/api/game-rounds');
+            if (sessionsRes.ok) {
+              const sessionsData = await sessionsRes.json();
+              sessionCount = (sessionsData.game_rounds || []).filter((s: any) => s.round_id === round.id).length;
+            }
+          } catch (err) {
+            console.error('Error fetching game rounds:', err);
+          }
+
+          deps[round.id] = { questions: questionCount, games: gameCount, sessions: sessionCount };
+        }
+        
+        setRoundDependencies(deps);
       }
     } catch (error) {
       console.error('Error fetching rounds:', error);
@@ -92,24 +146,71 @@ export default function RoundsPage() {
     }
   };
 
-  const handleDeleteRound = async (roundId: string, roundName: string) => {
-    if (!confirm(`${t('common.confirm')} "${roundName}"?`)) return;
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<{
+    roundId: string;
+    roundName: string;
+    questionCount: number;
+    gameCount: number;
+    sessionCount: number;
+  } | null>(null);
+
+  const handleDeleteRoundClick = async (roundId: string, roundName: string) => {
+    try {
+      // Fetch dependency counts
+      const questionsResponse = await fetch(`/api/questions?roundId=${roundId}`);
+      const questionsData = questionsResponse.ok ? await questionsResponse.json() : { questions: [] };
+      const questionCount = questionsData.questions?.filter((q: Question) => q.round_id === roundId).length || 0;
+
+      const gamesResponse = await fetch(`/api/games?roundId=${roundId}`);
+      const gamesData = gamesResponse.ok ? await gamesResponse.json() : { games: [] };
+      const gameCount = gamesData.games?.filter((g: any) => g.round_id === roundId).length || 0;
+
+      setDeleteModalData({
+        roundId,
+        roundName,
+        questionCount,
+        gameCount,
+        sessionCount: 0,
+      });
+      setDeleteModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching dependencies:', error);
+      setError('Failed to fetch round dependencies');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModalData) return;
+
+    // Block deletion if games exist
+    if (deleteModalData.gameCount > 0) {
+      setError('Cannot delete this round because it has associated games. Please delete all games first.');
+      setDeleteModalOpen(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/rounds/${roundId}`, {
+      const response = await fetch(`/api/rounds/${deleteModalData.roundId}`, {
         method: 'DELETE',
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setSuccess(`✓ ${t('common.roundDeleted')} "${roundName}" ${t('common.successfully')}!`);
-        setRounds(rounds.filter((r) => r.id !== roundId));
+        setSuccess(`✓ Round "${deleteModalData.roundName}" and ${deleteModalData.questionCount} associated questions deleted successfully!`);
+        setError('');
+        setRounds(rounds.filter((r) => r.id !== deleteModalData.roundId));
+        setDeleteModalOpen(false);
+        setDeleteModalData(null);
       } else {
-        const data = await response.json();
-        setError(data.error || t('common.failedDelete'));
+        setError(data.error || 'Failed to delete round');
+        setSuccess('');
       }
     } catch (error) {
       console.error('Error deleting round:', error);
-      setError(t('common.failedDelete'));
+      setError('An error occurred while deleting the round. Please try again.');
+      setSuccess('');
     }
   };
 
@@ -117,16 +218,25 @@ export default function RoundsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header Section */}
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">{t('rounds.rounds')}</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            {t('rounds.rounds')}
+          </h2>
+          <p className="text-muted-foreground mt-2">
             {isPlayer ? t('play.selectGame') : t('rounds.manageRounds')}
           </p>
         </div>
+        {!isPlayer && (
+          <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
+            <Plus className="mr-2 h-4 w-4" />
+            {t('rounds.newRound')}
+          </Button>
+        )}
         {isPlayer && (
           <Link href="/dashboard/rounds/select">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
               <Play className="mr-2 h-4 w-4" />
               {t('play.playNow')}
             </Button>
@@ -137,9 +247,9 @@ export default function RoundsPage() {
       {!isPlayer && (
         <>
           {/* Create Round Form */}
-          <Card className="border-border/50 bg-card">
-            <CardHeader>
-              <CardTitle>{t('rounds.newRound')}</CardTitle>
+          <Card className="border-border/50 bg-gradient-to-br from-card to-card/50 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">{t('rounds.newRound')}</CardTitle>
               <CardDescription>{t('common.addNew')}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -163,7 +273,7 @@ export default function RoundsPage() {
                     value={roundName}
                     onChange={(e) => setRoundName(e.target.value)}
                     disabled={isCreating}
-                    className="bg-input border-border/50"
+                    className="bg-input border-border/50 focus:border-primary/50 transition-colors"
                   />
                 </div>
 
@@ -174,14 +284,14 @@ export default function RoundsPage() {
                     value={roundDescription}
                     onChange={(e) => setRoundDescription(e.target.value)}
                     disabled={isCreating}
-                    className="bg-input border-border/50"
+                    className="bg-input border-border/50 focus:border-primary/50 transition-colors"
                   />
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isCreating}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-lg transition-all"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   {isCreating ? t('common.creating') : t('rounds.newRound')}
@@ -193,76 +303,119 @@ export default function RoundsPage() {
       )}
 
       {/* Rounds List */}
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle>{t('rounds.rounds')} ({rounds.length})</CardTitle>
+      <Card className="border-border/50 bg-card shadow-lg">
+        <CardHeader className="pb-4 border-b border-border/20">
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-2xl">{t('rounds.rounds')}</span>
+            <span className="bg-gradient-to-r from-primary to-primary/60 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              {rounds.length}
+            </span>
+          </CardTitle>
           <CardDescription>
             {isPlayer ? t('play.availableGames') : t('rounds.manageRounds')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+              </div>
+            </div>
           ) : rounds.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {isPlayer ? t('play.noGamesAvailable') : t('rounds.noRounds')}
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">{isPlayer ? t('play.noGamesAvailable') : t('rounds.noRounds')}</p>
+              {!isPlayer && (
+                <Button className="bg-primary hover:bg-primary/90">
+                  {t('rounds.newRound')}
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {rounds.map((round) => (
                 <div
                   key={round.id}
-                  className="border border-border/30 rounded-lg p-4 hover:border-primary/30 hover:bg-secondary/20 transition-all"
+                  className="group border border-border/30 rounded-xl p-5 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-300 shadow-sm hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {round.name}
-                        <span className="text-sm text-muted-foreground ml-2">
-                          ({t('rounds.roundNumber')} #{round.round_number})
-                        </span>
-                      </h3>
-                      {round.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{round.description}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {t('common.created')}: {new Date(round.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-foreground text-base group-hover:text-primary transition-colors mb-1">
+                      {round.name}
+                    </h3>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      Round #{round.round_number}
+                    </span>
+                  </div>
 
-                    <div className="flex gap-2 ml-4">
-                      {isPlayer ? (
-                        <Link href={`/dashboard/rounds/select?roundId=${round.id}`}>
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  {round.description && (
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{round.description}</p>
+                  )}
+
+                  <div className="text-xs text-muted-foreground mb-4">
+                    {new Date(round.created_at).toLocaleDateString()}
+                  </div>
+
+                  {!isPlayer && (
+                    <div className="bg-muted/30 rounded-lg p-3 mb-4 text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span>Questions:</span>
+                        <span className="font-semibold">{roundDependencies[round.id]?.questions || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Games:</span>
+                        <span className="font-semibold">{roundDependencies[round.id]?.games || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Sessions:</span>
+                        <span className="font-semibold">{roundDependencies[round.id]?.sessions || 0}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {isPlayer ? (
+                      <Link href={`/dashboard/rounds/select?roundId=${round.id}`} className="flex-1">
+                        <Button
+                          size="sm"
+                          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          {t('play.playNow')}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <>
+                        <Link href={`/dashboard/rounds/${round.id}`} className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all"
                           >
-                            <Play className="h-4 w-4 mr-2" />
-                            {t('play.playNow')}
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            {t('common.edit')}
                           </Button>
                         </Link>
-                      ) : (
-                        <>
-                          <Link href={`/dashboard/rounds/${round.id}`}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-border/50 bg-transparent"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteRound(round.id, round.name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`${
+                            roundDependencies[round.id]?.games > 0
+                              ? 'text-yellow-600 hover:bg-yellow-500/10 cursor-not-allowed opacity-50'
+                              : 'text-destructive hover:bg-destructive/10'
+                          } transition-all`}
+                          onClick={() => handleDeleteRoundClick(round.id, round.name)}
+                          title={
+                            roundDependencies[round.id]?.games > 0
+                              ? 'Cannot delete: Round has associated games'
+                              : 'Delete round'
+                          }
+                          disabled={roundDependencies[round.id]?.games > 0}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -271,53 +424,83 @@ export default function RoundsPage() {
         </CardContent>
       </Card>
 
-      {!isPlayer && (
-        <>
-          {/* Quick Links */}
-          {/* <Card className="border-border/50 bg-card">
-            <CardHeader>
-              <CardTitle>Next Steps</CardTitle>
-              <CardDescription>What to do after creating rounds</CardDescription>
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && deleteModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md mx-4 border-destructive/30 bg-card">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg text-destructive">⚠️ Delete Round</CardTitle>
+              <CardDescription>Are you sure you want to delete this round?</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="text-primary font-semibold">1.</div>
-                <div>
-                  <p className="font-medium text-foreground">Upload Questions</p>
-                  <p className="text-sm text-muted-foreground">
-                    Go to{' '}
-                    <Link href="/dashboard/questions/upload" className="text-primary hover:underline">
-                      Questions Upload
-                    </Link>{' '}
-                    to add questions to your rounds
+            <CardContent className="space-y-4">
+              {/* Warning Message */}
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-2">
+                <p className="font-semibold text-destructive">Round: {deleteModalData.roundName}</p>
+                <p className="text-sm text-foreground">This action will:</p>
+                
+                <ul className="text-sm space-y-1 ml-4">
+                  {deleteModalData.questionCount > 0 && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-destructive">✓</span>
+                      <span>Delete {deleteModalData.questionCount} associated question{deleteModalData.questionCount !== 1 ? 's' : ''}</span>
+                    </li>
+                  )}
+                  {deleteModalData.gameCount > 0 && (
+                    <li className="flex items-center gap-2 text-yellow-600">
+                      <span>✗</span>
+                      <span>BLOCKED: {deleteModalData.gameCount} game{deleteModalData.gameCount !== 1 ? 's' : ''} using this round</span>
+                    </li>
+                  )}
+                  {deleteModalData.questionCount === 0 && deleteModalData.gameCount === 0 && (
+                    <li className="flex items-center gap-2">
+                      <span className="text-destructive">✓</span>
+                      <span>Delete this round (no associated data)</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {/* Error message if games exist */}
+              {deleteModalData.gameCount > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-yellow-800">
+                    ⚠️ Cannot delete this round because it has {deleteModalData.gameCount} associated game{deleteModalData.gameCount !== 1 ? 's' : ''}.
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Please delete all games using this round first.
                   </p>
                 </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteModalOpen(false);
+                    setDeleteModalData(null);
+                  }}
+                  className="flex-1"
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteModalData.gameCount > 0}
+                  className={deleteModalData.gameCount > 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                >
+                  {deleteModalData.gameCount > 0 ? 'Delete Blocked' : 'Delete Round'}
+                </Button>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-primary font-semibold">2.</div>
-                <div>
-                  <p className="font-medium text-foreground">Create Games</p>
-                  <p className="text-sm text-muted-foreground">
-                    Go to{' '}
-                    <Link href="/dashboard/games" className="text-primary hover:underline">
-                      Games
-                    </Link>{' '}
-                    to create games for your rounds
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-primary font-semibold">3.</div>
-                <div>
-                  <p className="font-medium text-foreground">Start Playing</p>
-                  <p className="text-sm text-muted-foreground">
-                    Start a game and begin playing with your questions
-                  </p>
-                </div>
-              </div>
+
+              {/* Info Text */}
+              <p className="text-xs text-muted-foreground text-center">
+                This action cannot be undone. Make sure you have backups.
+              </p>
             </CardContent>
-          </Card> */}
-        </>
+          </Card>
+        </div>
       )}
     </div>
   );

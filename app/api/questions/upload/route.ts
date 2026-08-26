@@ -73,11 +73,30 @@ export async function POST(request: NextRequest) {
       if (rowNumber === 1) return; // Skip header row
 
       try {
-        // Get cell values and convert to string, handling null/undefined
+        // Get cell values and convert to string, handling null/undefined and objects
         const getCell = (col: string) => {
           const cell = row.getCell(col);
-          if (cell.value === null || cell.value === undefined) return '';
-          return String(cell.value).trim();
+          let value: any = cell.value;
+          
+          // Handle null/undefined
+          if (value === null || value === undefined) return '';
+          
+          // If it's an object, extract the text value
+          if (typeof value === 'object' && !(value instanceof Date)) {
+            // ExcelJS might return objects with rich text or formulas
+            if ((value as any).richText && Array.isArray((value as any).richText)) {
+              // Extract text from rich text array
+              return (value as any).richText.map((rt: any) => rt.text || rt).join('').trim();
+            }
+            if ((value as any).text) return String((value as any).text).trim();
+            if ((value as any).result) return String((value as any).result).trim();
+            if ((value as any).formula) return String((value as any).formula).trim();
+            // If it's a plain object, try to convert
+            return JSON.stringify(value).replace(/[{}"\[\]]/g, '').trim();
+          }
+          
+          // Convert to string
+          return String(value).trim();
         };
 
         const questionText = getCell('A');
@@ -101,18 +120,18 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        // For multiple choice, correct answer is required
-        // For short answer, correct answer is required
-        if (!correctAnswer.trim()) {
-          errors.push(`Row ${rowNumber}: Correct Answer is required`);
+        // For multiple choice and short answer, correct answer is required
+        // For sign_screen, signed, and general_knowledge, correct answer is NOT required
+        const normalizedType = questionTypeStr.toLowerCase().trim();
+        if (normalizedType !== 'sign_screen' && normalizedType !== 'signed' && normalizedType !== 'general knowledge' && !correctAnswer.trim()) {
+          errors.push(`Row ${rowNumber}: Correct Answer is required for ${normalizedType}`);
           return;
         }
 
         // Validate question type
-        const validTypes = ['multiple_choice', 'short_answer'];
-        const normalizedType = questionTypeStr.toLowerCase().trim();
+        const validTypes = ['multiple_choice', 'short_answer', 'sign_screen', 'signed', 'general knowledge'];
         if (!validTypes.includes(normalizedType)) {
-          errors.push(`Row ${rowNumber}: Invalid question type "${questionTypeStr}". Use "multiple_choice" or "short_answer"`);
+          errors.push(`Row ${rowNumber}: Invalid question type "${questionTypeStr}". Use "multiple_choice", "short_answer", "sign_screen", or "general knowledge"`);
           return;
         }
 
@@ -151,27 +170,93 @@ export async function POST(request: NextRequest) {
 
         const roundId = roundResult.rows[0].id;
 
-        // Get question type ID based on type
-        const dbTypeName = q.question_type === 'short_answer' ? 'short_answer' : 'multiple_choice';
-        let typeResult = await sql`
-          SELECT id FROM question_types WHERE name = ${dbTypeName} LIMIT 1
-        `;
+        // Get question type ID based on type with database constraints (with fallback for missing columns)
+        const dbTypeName = q.question_type === 'short_answer' ? 'short_answer' : q.question_type === 'sign_screen' ? 'sign_screen' : q.question_type === 'signed' ? 'signed' : q.question_type === 'general knowledge' ? 'general knowledge' : 'multiple_choice';
+        
+        let typeResult;
+        try {
+          typeResult = await sql`
+            SELECT 
+              id, 
+              time_limit,
+              min_time_limit,
+              max_time_limit,
+              min_minimum_time_frame
+            FROM question_types 
+            WHERE name = ${dbTypeName} 
+            LIMIT 1
+          `;
+        } catch (columnError: any) {
+          // If constraint columns don't exist, use basic query
+          if (columnError.code === '42703') {
+            typeResult = await sql`
+              SELECT 
+                id, 
+                time_limit
+              FROM question_types 
+              WHERE name = ${dbTypeName} 
+              LIMIT 1
+            `;
+          } else {
+            throw columnError;
+          }
+        }
         
         let questionTypeId = typeResult.rows[0]?.id;
+        let minTimeLimit = typeResult.rows[0]?.min_time_limit || 5;
+        let maxTimeLimit = typeResult.rows[0]?.max_time_limit || 300;
+        let minMinimumTimeFrame = typeResult.rows[0]?.min_minimum_time_frame || 1;
 
-        // If question type doesn't exist, create it
+        // If question type doesn't exist, create it with default constraints
         if (!questionTypeId) {
-          const createTypeResult = await sql`
-            INSERT INTO question_types (name, description)
-            VALUES (${dbTypeName}, ${dbTypeName === 'short_answer' ? 'Short Answer Questions' : 'Multiple Choice Questions'})
-            RETURNING id
-          `;
-          questionTypeId = createTypeResult.rows[0]?.id;
+          const typeDescriptions: Record<string, string> = {
+            'short_answer': 'Short Answer Questions',
+            'sign_screen': 'Sign Screen Questions',
+            'signed': 'Signed Questions',
+            'general knowledge': 'General Knowledge Questions',
+            'multiple_choice': 'Multiple Choice Questions'
+          };
+          try {
+            const createTypeResult = await sql`
+              INSERT INTO question_types (
+                name, 
+                description,
+                time_limit,
+                min_time_limit,
+                max_time_limit,
+                min_minimum_time_frame
+              )
+              VALUES (${dbTypeName}, ${typeDescriptions[dbTypeName] || dbTypeName}, 30, 5, 300, 1)
+              RETURNING id, min_time_limit, max_time_limit, min_minimum_time_frame
+            `;
+            questionTypeId = createTypeResult.rows[0]?.id;
+            minTimeLimit = createTypeResult.rows[0]?.min_time_limit || 5;
+            maxTimeLimit = createTypeResult.rows[0]?.max_time_limit || 300;
+            minMinimumTimeFrame = createTypeResult.rows[0]?.min_minimum_time_frame || 1;
+          } catch (createError: any) {
+            // If columns don't exist, create without them
+            if (createError.code === '42703') {
+              const createTypeResult = await sql`
+                INSERT INTO question_types (name, description)
+                VALUES (${dbTypeName}, ${typeDescriptions[dbTypeName] || dbTypeName})
+                RETURNING id
+              `;
+              questionTypeId = createTypeResult.rows[0]?.id;
+            } else {
+              throw createError;
+            }
+          }
         }
 
         // If still no type ID, skip this question
         if (!questionTypeId) {
           errors.push(`No question type found for: ${q.question_type}`);
+          continue;
+        }
+
+        // Validate time_limit against database constraints
+        if (q.timeLimit < minTimeLimit || q.timeLimit > maxTimeLimit) {
+          errors.push(`Row with question "${q.question_text}": Time limit ${q.timeLimit}s is outside allowed range ${minTimeLimit}-${maxTimeLimit}s for ${dbTypeName} (from database)`);
           continue;
         }
 

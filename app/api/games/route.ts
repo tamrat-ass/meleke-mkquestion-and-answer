@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { logActivity } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,6 +79,20 @@ export async function POST(request: NextRequest) {
           created_at: inserted.created_at,
         }
       : null;
+
+    // Log activity
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    
+    await logActivity(
+      userId,
+      'GAME_CREATED',
+      'game',
+      gameId,
+      { game_title: gameTitle, round_id },
+      ipAddress as string,
+      userAgent as string
+    );
 
     return NextResponse.json(
       {

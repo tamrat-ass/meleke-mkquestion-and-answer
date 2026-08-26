@@ -130,22 +130,26 @@ export default function GamesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Header Section */}
+      <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">{t('games.games')}</h2>
-          <p className="text-muted-foreground">{t('games.manageGames')}</p>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            {t('games.games')}
+          </h2>
+          <p className="text-muted-foreground mt-2">{t('games.manageGames')}</p>
         </div>
         <Link href="/dashboard/games/new">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
             <Plus className="mr-2 h-4 w-4" />
             {t('games.newGame')}
           </Button>
         </Link>
       </div>
 
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle>{t('common.search')}</CardTitle>
+      {/* Search & Filter Card */}
+      <Card className="border-border/50 bg-gradient-to-br from-card to-card/50 shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">{t('common.search')}</CardTitle>
           <CardDescription>{t('games.selectGame')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -153,10 +157,10 @@ export default function GamesPage() {
             placeholder={t('games.gameName')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-input border-border/50"
+            className="bg-input border-border/50 focus:border-primary/50 transition-colors"
           />
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-48 bg-input border-border/50">
+            <SelectTrigger className="w-48 bg-input border-border/50 focus:border-primary/50">
               <SelectValue placeholder={t('common.status')} />
             </SelectTrigger>
             <SelectContent className="bg-card border-border/50">
@@ -169,58 +173,86 @@ export default function GamesPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle>{t('games.games')} ({filteredGames.length})</CardTitle>
+      {/* Games List Card */}
+      <Card className="border-border/50 bg-card shadow-lg">
+        <CardHeader className="pb-4 border-b border-border/20">
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-2xl">{t('games.games')}</span>
+            <span className="bg-gradient-to-r from-primary to-primary/60 text-white px-3 py-1 rounded-full text-sm font-semibold">
+              {filteredGames.length}
+            </span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+              </div>
+            </div>
           ) : filteredGames.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {t('games.noGames')} {games.length === 0 ? t('games.createFirst') : ''}
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-2">{t('games.noGames')}</p>
+              {games.length === 0 && (
+                <Link href="/dashboard/games/new">
+                  <Button className="mt-4 bg-primary hover:bg-primary/90">
+                    {t('games.createFirst')}
+                  </Button>
+                </Link>
+              )}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {sortedRounds.map((round) => (
-                <div key={round.round_id} className="space-y-3">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {round.round_name} (Round {round.round_number})
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
+                <div key={round.round_id}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-primary/40 to-transparent"></div>
+                    <h3 className="text-lg font-bold text-foreground whitespace-nowrap">
+                      {round.round_name}
+                      <span className="text-sm text-muted-foreground ml-2 font-normal">
+                        (Round {round.round_number})
+                      </span>
+                    </h3>
+                    <div className="flex-1 h-0.5 bg-gradient-to-l from-primary/40 to-transparent"></div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {round.games.map((game: Game) => (
                       <div
                         key={game.id}
-                        className="border border-border/30 rounded-lg p-4 hover:border-primary/30 hover:bg-secondary/20 transition-all"
+                        className="group border border-border/30 rounded-xl p-5 hover:border-primary/50 hover:bg-secondary/30 transition-all duration-300 shadow-sm hover:shadow-md"
                       >
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-foreground">{game.title}</h4>
+                            <h4 className="font-bold text-foreground text-base group-hover:text-primary transition-colors">
+                              {game.title}
+                            </h4>
                           </div>
-                          <span className={`text-xs px-3 py-1 rounded-full whitespace-nowrap ml-2 ${getStatusColor(game.status)}`}>
+                          <span className={`text-xs px-3 py-1 rounded-full whitespace-nowrap ml-2 font-semibold ${getStatusColor(game.status)}`}>
                             {t(`common.${game.status}`)}
                           </span>
                         </div>
 
                         <div className="text-xs text-muted-foreground mb-4">
-                          {t('common.created')}: {new Date(game.created_at).toLocaleDateString()}
+                          {new Date(game.created_at).toLocaleDateString()}
                         </div>
 
                         <div className="flex gap-2">
                           <Button
                             variant="default"
                             size="sm"
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            onClick={() => {
-                              // Start game - update status to active
-                              handleStartGame(game.id);
-                            }}
+                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all"
+                            onClick={() => handleStartGame(game.id)}
                           >
                             <PlayIcon className="h-4 w-4 mr-2" />
                             {t('play.playNow')}
                           </Button>
                           <Link href={`/dashboard/games/${game.id}`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full border-border/50 bg-transparent">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                            >
                               <Edit2 className="h-4 w-4 mr-2" />
                               {t('common.edit')}
                             </Button>
@@ -228,7 +260,7 @@ export default function GamesPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive transition-all"
                             onClick={() => handleDeleteGame(game.id)}
                             title={t('common.delete')}
                           >

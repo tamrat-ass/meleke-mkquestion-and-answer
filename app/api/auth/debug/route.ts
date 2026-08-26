@@ -4,7 +4,50 @@ import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all users and their password hashes
+    // Check if user has sent their user data in headers
+    // Frontend sends user info via Authorization header or custom header
+    const authHeader = request.headers.get('x-user-id');
+    
+    if (authHeader) {
+      // User provided their ID - fetch their full profile with role
+      try {
+        const userId = parseInt(authHeader);
+        const userResult = await sql`
+          SELECT 
+            u.id,
+            u.email,
+            CONCAT(u.first_name, ' ', u.last_name) as full_name,
+            r.name as role_name,
+            u.is_active,
+            u.permissions
+          FROM users u
+          LEFT JOIN roles r ON u.role_id = r.id
+          WHERE u.id = ${userId}
+        `;
+
+        if (userResult.rows.length > 0) {
+          const user = userResult.rows[0];
+          return NextResponse.json(
+            {
+              user: {
+                id: user.id,
+                email: user.email,
+                full_name: user.full_name,
+                role_name: user.role_name || 'player',
+                is_active: user.is_active,
+                permissions: user.permissions || []
+              },
+              authenticated: true
+            },
+            { status: 200 }
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching user from header:', err);
+      }
+    }
+
+    // Fallback: Return debug info for password testing
     const result = await sql`
       SELECT 
         id,

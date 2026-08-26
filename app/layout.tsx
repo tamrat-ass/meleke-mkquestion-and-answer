@@ -1,13 +1,9 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 
 import '../styles/globals.css'
 import { LanguageProvider } from '@/lib/i18n/context'
-
-// Build version 4 - Complete rebuild required
-const _geist = Geist({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+import { ThemeProvider } from 'next-themes'
 
 export const metadata: Metadata = {
   title: 'QuizMaster - Q&A Game Platform',
@@ -28,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

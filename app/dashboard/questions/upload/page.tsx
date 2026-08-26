@@ -87,34 +87,57 @@ export default function UploadQuestionsPage() {
         </Link>
       </div>
 
-      {/* <Card className="border-border/50 bg-card">
+      <Card className="border-border/50 bg-card">
         <CardHeader>
-          <CardTitle>Upload Instructions</CardTitle>
-          <CardDescription>Follow these steps to upload questions</CardDescription>
+          <CardTitle>Supported Question Types</CardTitle>
+          <CardDescription>Choose the right question type for your questions</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">1</div>
-              <div>
-                <p className="font-semibold text-foreground">Download the Excel template</p>
-              </div>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-foreground mb-2">1. Multiple Choice</h4>
+              <p className="text-sm text-muted-foreground mb-2">Standard multiple choice questions with 4 options (A, B, C, D)</p>
+              <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                <li>• <strong>Type:</strong> multiple_choice</li>
+                <li>• <strong>Correct Answer:</strong> A, B, C, or D</li>
+                <li>• <strong>Options:</strong> All 4 options (A, B, C, D) required</li>
+              </ul>
             </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">2</div>
-              <div>
-                <p className="font-semibold text-foreground">Fill in your questions</p>
-              </div>
+            
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-foreground mb-2">2. Short Answer</h4>
+              <p className="text-sm text-muted-foreground mb-2">Text-based questions requiring a specific answer</p>
+              <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                <li>• <strong>Type:</strong> short_answer</li>
+                <li>• <strong>Correct Answer:</strong> The expected answer (e.g., Au, Jupiter, Paris)</li>
+                <li>• <strong>Options:</strong> Leave empty (A, B, C, D columns not needed)</li>
+              </ul>
             </div>
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">3</div>
-              <div>
-                <p className="font-semibold text-foreground">Upload the file</p>
-              </div>
+
+            <div className="border-b pb-4">
+              <h4 className="font-semibold text-foreground mb-2">3. Sign Screen</h4>
+              <p className="text-sm text-muted-foreground mb-2">Full-screen display questions for signing or confirmations</p>
+              <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                <li>• <strong>Type:</strong> sign_screen</li>
+                <li>• <strong>Correct Answer:</strong> Leave empty (not required)</li>
+                <li>• <strong>Options:</strong> Leave empty (A, B, C, D columns not needed)</li>
+                <li>• <strong>Question Text:</strong> The message or instruction to display</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-foreground mb-2">4. General Knowledge</h4>
+              <p className="text-sm text-muted-foreground mb-2">Knowledge-based questions for display only (no answer selection required)</p>
+              <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                <li>• <strong>Type:</strong> general knowledge</li>
+                <li>• <strong>Correct Answer:</strong> Leave empty</li>
+                <li>• <strong>Options:</strong> Leave empty (A, B, C, D columns not needed)</li>
+                <li>• <strong>Question Text:</strong> The knowledge content to display</li>
+              </ul>
             </div>
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
 
       <div className="grid grid-cols-2 gap-6">
         <Card className="border-border/50 bg-card">

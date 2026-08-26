@@ -1,0 +1,1064 @@
+{
+  "info": {
+    "name": "Q&A Game Platform - Complete API Collection",
+    "description": "Complete API collection for Q&A Game Platform - ALL 47 endpoints including authentication, game management, questions, rounds, question types, dashboard, admin operations, and more.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"New User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Debug Auth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/debug",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "debug"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Games",
+      "item": [
+        {
+          "name": "Get All Games",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games"]
+            }
+          }
+        },
+        {
+          "name": "Create Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Quiz Challenge 2026\",\n  \"round_id\": \"{{roundId}}\",\n  \"groups\": [\"Group A\", \"Group B\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/games",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games"]
+            }
+          }
+        },
+        {
+          "name": "Get Game by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/{{gameId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "{{gameId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Game",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Quiz Challenge\",\n  \"round_id\": \"{{roundId}}\",\n  \"groups\": [\"Group A\", \"Group B\", \"Group C\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/games/{{gameId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "{{gameId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Game",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/{{gameId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "{{gameId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Game Teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/games/{{gameId}}/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "{{gameId}}", "teams"]
+            }
+          }
+        },
+        {
+          "name": "Add Team to Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"team_name\": \"Team Alpha\",\n  \"members\": [\"user1@example.com\", \"user2@example.com\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/games/{{gameId}}/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "games", "{{gameId}}", "teams"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rounds",
+      "item": [
+        {
+          "name": "Get All Rounds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rounds",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rounds"]
+            }
+          }
+        },
+        {
+          "name": "Create Round",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General Knowledge Round\",\n  \"description\": \"A comprehensive round\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rounds",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rounds"]
+            }
+          }
+        },
+        {
+          "name": "Get Round by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rounds/{{roundId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rounds", "{{roundId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Round",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Round Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rounds/{{roundId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rounds", "{{roundId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Round",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rounds/{{roundId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rounds", "{{roundId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create Multiple Choice Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_id\": \"{{roundId}}\",\n  \"question_text\": \"What is the capital of France?\",\n  \"question_type\": \"multiple_choice\",\n  \"options\": [\"Paris\", \"London\", \"Berlin\", \"Madrid\"],\n  \"correct_answer\": \"Paris\",\n  \"marks\": 1,\n  \"time_limit\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create Short Answer Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_id\": \"{{roundId}}\",\n  \"question_text\": \"What year did World War II end?\",\n  \"question_type\": \"short_answer\",\n  \"correct_answer\": \"1945\",\n  \"marks\": 2,\n  \"time_limit\": 45\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create Sign Screen Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_id\": \"{{roundId}}\",\n  \"question_text\": \"Break Time - Stretch and Relax!\",\n  \"question_type\": \"sign_screen\",\n  \"correct_answer\": \"\",\n  \"marks\": 0,\n  \"time_limit\": 120\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create General Knowledge Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_id\": \"{{roundId}}\",\n  \"question_text\": \"General knowledge question about history\",\n  \"question_type\": \"general knowledge\",\n  \"correct_answer\": \"\",\n  \"marks\": 0,\n  \"time_limit\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Get Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "{{questionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_text\": \"Updated question text\",\n  \"correct_answer\": \"Updated answer\",\n  \"marks\": 2,\n  \"time_limit\": 45\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "{{questionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "{{questionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Questions by Round",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/by-round/{{roundId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "by-round", "{{roundId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Next Unopened Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/next-unopened?round_id={{roundId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "next-unopened"],
+              "query": [
+                {
+                  "key": "round_id",
+                  "value": "{{roundId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Question Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/template",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "template"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Upload Questions (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "value": "",
+                  "type": "file"
+                },
+                {
+                  "key": "round_id",
+                  "value": "{{roundId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Verify Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Mark Question as Opened",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"opened_at\": \"2026-06-13T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/{{questionId}}/mark-opened",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "{{questionId}}", "mark-opened"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Question Types",
+      "item": [
+        {
+          "name": "Get All Question Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Question Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type_name\": \"custom_type\",\n  \"display_name\": \"Custom Question Type\",\n  \"description\": \"A custom question type\",\n  \"default_time_limit\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types"]
+            }
+          }
+        },
+        {
+          "name": "Update Question Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Updated Name\",\n  \"description\": \"Updated description\",\n  \"default_time_limit\": 45\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types/{{questionTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types", "{{questionTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Question Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types/{{questionTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types", "{{questionTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Time Limit for Question Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types/{{questionTypeId}}/get-time-limit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types", "{{questionTypeId}}", "get-time-limit"]
+            }
+          }
+        },
+        {
+          "name": "Update Time Limit for Question Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"time_limit\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types/{{questionTypeId}}/update-time-limit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types", "{{questionTypeId}}", "update-time-limit"]
+            }
+          }
+        },
+        {
+          "name": "Check Question Type Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-types/{{questionTypeId}}/check-options",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "question-types", "{{questionTypeId}}", "check-options"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game Answers",
+      "item": [
+        {
+          "name": "Submit Game Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"game_id\": \"{{gameId}}\",\n  \"question_id\": \"{{questionId}}\",\n  \"user_answer\": \"Paris\",\n  \"is_correct\": true,\n  \"marks_obtained\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/game-answers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game-answers"]
+            }
+          }
+        },
+        {
+          "name": "Get Game Answers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/game-answers?game_id={{gameId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "game-answers"],
+              "query": [
+                {
+                  "key": "game_id",
+                  "value": "{{gameId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Games & Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/games-questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "games-questions"]
+            }
+          }
+        },
+        {
+          "name": "Get Question Distribution",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/question-distribution",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "question-distribution"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users & Admin Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newadmin@example.com\",\n  \"password\": \"securepassword123\",\n  \"full_name\": \"Admin User\",\n  \"name\": \"admin_user\",\n  \"role_name\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Updated Name\",\n  \"role_name\": \"moderator\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Reset User Password (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reset-user-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "reset-user-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"create_games\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/permissions/{{permissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "permissions", "{{permissionId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "Get Activity Log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activity",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activity"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Operations",
+      "item": [
+        {
+          "name": "Reset Question Status (Single)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": \"{{questionId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reset-question-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "reset-question-status"]
+            }
+          }
+        },
+        {
+          "name": "Reset Question Status (Round)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_id\": \"{{roundId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reset-question-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "reset-question-status"]
+            }
+          }
+        },
+        {
+          "name": "Fix Question Timings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/fix-timings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "fix-timings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Testing & Debug",
+      "item": [
+        {
+          "name": "Test - Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test"]
+            }
+          }
+        },
+        {
+          "name": "Test - Check Question Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/check-options",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "check-options"]
+            }
+          }
+        },
+        {
+          "name": "Test - Verify Time Limits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/test/verify-time-limit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test", "verify-time-limit"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gameId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "roundId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionTypeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "teamId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "permissionId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
