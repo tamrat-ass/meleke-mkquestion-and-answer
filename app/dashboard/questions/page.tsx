@@ -45,6 +45,7 @@ function QuestionsPage() {
       'matching': t('questions.matching'),
       'general_knowledge': t('questions.generalKnowledge'),
       'general knowledge': t('questions.generalKnowledge'),
+      'scrambled_word': 'Scrambled Word Challenge',
     };
     return typeMap[type] || type;
   };

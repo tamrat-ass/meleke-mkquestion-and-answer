@@ -113,6 +113,7 @@ export default function NewQuestionPage() {
         return;
       }
 
+      // For scrambled_word, we still need a correct answer (the word to scramble)
       // For sign_screen and general_knowledge, we don't need correct answer and options
       const isNoAnswerType = formData.question_type === 'sign_screen' || 
                              formData.question_type === 'general_knowledge' ||
@@ -246,7 +247,8 @@ export default function NewQuestionPage() {
                         {type.name === 'sign_screen' && 'Sign Screen'}
                         {type.name === 'general_knowledge' && t('questions.generalKnowledge')}
                         {type.name === 'choose' && t('questions.multipleChoice')}
-                        {!['multiple_choice', 'short_answer', 'sign_screen', 'general_knowledge', 'choose'].includes(type.name) && type.name}
+                        {type.name === 'scrambled_word' && 'Scrambled Word Challenge'}
+                        {!['multiple_choice', 'short_answer', 'sign_screen', 'general_knowledge', 'choose', 'scrambled_word'].includes(type.name) && type.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -257,7 +259,9 @@ export default function NewQuestionPage() {
             <div className="grid grid-cols-3 gap-4">
               {formData.question_type !== 'sign_screen' && !formData.question_type.toLowerCase().includes('general') && (
                 <div className="space-y-2 col-span-3 md:col-span-1">
-                  <label className="text-sm font-medium">{t('questions.correctAnswer')} *</label>
+                  <label className="text-sm font-medium">
+                    {formData.question_type === 'scrambled_word' ? 'Word/Answer' : t('questions.correctAnswer')} *
+                  </label>
                   {formData.question_type === 'short_answer' ? (
                     <textarea
                       name="correct_answer"
@@ -273,7 +277,13 @@ export default function NewQuestionPage() {
                       name="correct_answer"
                       value={formData.correct_answer}
                       onChange={handleInputChange}
-                      placeholder={formData.question_type === 'choose' ? 'A, B, C, or D' : t('questions.enterAnswer')}
+                      placeholder={
+                        formData.question_type === 'scrambled_word'
+                          ? 'e.g., BUTTERFLY'
+                          : formData.question_type === 'choose'
+                            ? 'A, B, C, or D'
+                            : t('questions.enterAnswer')
+                      }
                       disabled={isLoading}
                       className="bg-input border-border/50"
                     />

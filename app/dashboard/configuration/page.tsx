@@ -105,6 +105,7 @@ export default function ConfigurationPage() {
       'matching': t('questions.matching'),
       'sign_screen': t('questions.signScreen'),
       'signed': t('questions.signed'),
+      'scrambled_word': 'Scrambled Word Challenge',
     };
     return typeMap[name] || name;
   };
@@ -118,6 +119,7 @@ export default function ConfigurationPage() {
       'matching': 'from-pink-500 to-pink-600',
       'sign_screen': 'from-red-500 to-red-600',
       'signed': 'from-indigo-500 to-indigo-600',
+      'scrambled_word': 'from-orange-500 to-orange-600',
     };
     return colorMap[name] || 'from-gray-500 to-gray-600';
   };
